@@ -3,7 +3,8 @@
     are based on the files with the same names in the ns-3.26 Wi-Fi module
     and were modified to include adjacent channel interference.
 
-    Copyright (C) 2017 Institute for Networked Systems, RWTH Aachen University (for modifications of ns-3.26 files)
+    Copyright (C) 2017 Institute for Networked Systems, RWTH Aachen University 
+    (for modifications of ns-3.26 files)
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
