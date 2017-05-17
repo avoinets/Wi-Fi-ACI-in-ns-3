@@ -105,7 +105,7 @@ YansWifiChannel::~YansWifiChannel ()
 //////////////////////////////////  Added code ////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-// Andra, 10.11.2016
+// Andra, 27.04.2017
 
 
 // calculate area between y and x by dividing into trapezoids
@@ -121,61 +121,60 @@ double trapz(std::vector<double> fo, std::vector<double> psdo)
   return area;
 }
 
-double overlapFactorToBeDecoded(uint32_t senderChannelWidth, uint32_t receiverChannelWidth, uint32_t senderCentralFrequency,  uint32_t receiverCentralFrequency, double transmitterPower, double receiverPower)
+double overlapFactorToBeDecoded(uint32_t senderChannelWidth, uint32_t receiverChannelWidth, uint32_t senderChannelFrequencyMHz,  uint32_t receiverChannelFrequencyMHz)
 {
-  // WORKS ONLY WITH CONSECUTIVE CHANNELS OF SAME WIDTH!!!
-  
-  // convert power in mW
-  double transmitterPowermW = pow(10.0, transmitterPower/10.0);
-  double receiverPowermW = pow(10.0, receiverPower/10.0);
- 
+  // overlapping factor to be returned  
+  double alpha=0.0;
+
   // spectrum mask given by standard
-  double psd_db[9] = {-40, -28, -20, 0, 0, 0, -20, -28, -40};
-  double f_20MHz[9] = {-30, -20, -11, -9, 0, 9, 11, 20, 30};
-  double f_40MHz[9] = {-60, -40, -21, -19, 0, 19, 21, 40, 60};
-  double f_80MHz[9] = {-120, -80, -40, -39, 0, 39, 41, 80, 120};
-  double f_160MHz[9] = {-240, -160, -81, -79, 0, 79, 81, 160, 240};
+  double psd_db[11] = {-40, -40, -28, -20, 0, 0, 0, -20, -28, -40, -40};
+  
+  //double inf = std::numeric_limits<double>::infinity();
+
+  double f_tx_20MHz[11] = {-50, -30, -20, -11, -9, 0, 9, 11, 20, 30, 50};
+  double f_tx_40MHz[11] = {-100, -60, -40, -21, -19, 0, 19, 21, 40, 60, 100};
+  double f_tx_80MHz[11] = {-200, -120, -80, -40, -39, 0, 39, 41, 80, 120, 200};
+  double f_tx_160MHz[11] = {-400, -240, -160, -81, -79, 0, 79, 81, 160, 240, 400};
+
+  double f_rx_20MHz[11] = {-50, -30, -20, -11, -9, 0, 9, 11, 20, 30, 50};
+  double f_rx_40MHz[11] = {-100, -60, -40, -21, -19, 0, 19, 21, 40, 60, 100};
+  double f_rx_80MHz[11] = {-200, -120, -80, -40, -39, 0, 39, 41, 80, 120, 200};
+  double f_rx_160MHz[11] = {-400, -240, -160, -81, -79, 0, 79, 81, 160, 240, 400};
 
   // spectrum mask for given transmitter and receiver
-  double f1[9];
-  double f2[9];
-  double psd_max1=0;
-  double psd1[9]; 
-  double psd_max2=0;
-  double psd2[9]; 
+  double f1[11];
+  double f2[11];
+  double psd1[11]; 
+  double psd2[11]; 
 
   switch (senderChannelWidth)
         {
          case 20:
-                psd_max1=transmitterPowermW/20.1414;
-                for(uint32_t i=0; i<9; i++)
+                for(uint32_t i=0; i<11; i++)
                         {
-                         f1[i]=senderCentralFrequency+f_20MHz[i];
-                         psd1[i]=psd_max1*pow(10, psd_db[i]/10.0);
+                         f1[i]=senderChannelFrequencyMHz+f_tx_20MHz[i];
+                         psd1[i]=pow(10, psd_db[i]/10.0);
                         }
                 break;
          case 40:
-                psd_max1=transmitterPowermW/40.2744;
-                for(uint32_t i=0; i<9; i++)
+                for(uint32_t i=0; i<11; i++)
                         {
-                         f1[i]=senderCentralFrequency+f_40MHz[i];
-                         psd1[i]=psd_max1*pow(10, psd_db[i]/10.0);
+                         f1[i]=senderChannelFrequencyMHz+f_tx_40MHz[i];
+                         psd1[i]=pow(10, psd_db[i]/10.0);
                         }
                 break;
          case 80:
-                psd_max1=transmitterPowermW/80.5404;
-                for(uint32_t i=0; i<9; i++)
+                for(uint32_t i=0; i<11; i++)
                         {
-                         f1[i]=senderCentralFrequency+f_80MHz[i];
-                         psd1[i]=psd_max1*pow(10, psd_db[i]/10.0);
+                         f1[i]=senderChannelFrequencyMHz+f_tx_80MHz[i];
+                         psd1[i]=pow(10, psd_db[i]/10.0);
                         }
                 break;
          case 160:
-                psd_max1=transmitterPowermW/161.0724;
-                for(uint32_t i=0; i<9; i++)
+                for(uint32_t i=0; i<11; i++)
                         {
-                         f1[i]=senderCentralFrequency+f_160MHz[i];
-                         psd1[i]=psd_max1*pow(10, psd_db[i]/10.0);
+                         f1[i]=senderChannelFrequencyMHz+f_tx_160MHz[i];
+                         psd1[i]=pow(10, psd_db[i]/10.0);
                         }
                 break;
           }
@@ -183,54 +182,56 @@ double overlapFactorToBeDecoded(uint32_t senderChannelWidth, uint32_t receiverCh
   switch (receiverChannelWidth)
         {
          case 20:
-                psd_max2=receiverPowermW/20.1414;
-                for(uint32_t i=0; i<9; i++)
+                for(uint32_t i=0; i<11; i++)
                         {
-                         f2[i]=receiverCentralFrequency+f_20MHz[i];
-                         psd2[i]=psd_max2*pow(10, psd_db[i]/10.0);
+                         f2[i]=receiverChannelFrequencyMHz+f_rx_20MHz[i];
+                         psd2[i]=pow(10, psd_db[i]/10.0);
                         }
                 break;
          case 40:
-                psd_max2=receiverPowermW/40.2744;
-                for(uint32_t i=0; i<9; i++)
+                for(uint32_t i=0; i<11; i++)
                         {
-                         f2[i]=receiverCentralFrequency+f_40MHz[i];
-                         psd2[i]=psd_max2*pow(10, psd_db[i]/10.0);
+                         f2[i]=receiverChannelFrequencyMHz+f_rx_40MHz[i];
+                         psd2[i]=pow(10, psd_db[i]/10.0);
                         }
                 break;
          case 80:
-                psd_max2=receiverPowermW/80.5404;
-                for(uint32_t i=0; i<9; i++)
+                for(uint32_t i=0; i<11; i++)
                         {
-                         f2[i]=receiverCentralFrequency+f_80MHz[i];
-                         psd2[i]=psd_max2*pow(10, psd_db[i]/10.0);
+                         f2[i]=receiverChannelFrequencyMHz+f_rx_80MHz[i];
+                         psd2[i]=pow(10, psd_db[i]/10.0);
                         }
                 break;
          case 160:
-                psd_max2=receiverPowermW/161.0724;
-                for(uint32_t i=0; i<9; i++)
+                for(uint32_t i=0; i<11; i++)
                         {
-                         f2[i]=receiverCentralFrequency+f_160MHz[i];
-                         psd2[i]=psd_max2*pow(10, psd_db[i]/10.0);
+                         f2[i]=receiverChannelFrequencyMHz+f_rx_160MHz[i];
+                         psd2[i]=pow(10, psd_db[i]/10.0);
                         }
                 break;
           }
 
 
-  // calculate overlapping area
+  // calculate overlapping area of masks
   std::vector<double> psdo;
   std::vector<double> fo;
   double f_min=std::max(f1[0],f2[0]);
-  double f_max=std::min(f1[8],f2[8]);
+  double f_max=std::min(f1[10],f2[10]);
+ 
 
-  for (uint32_t i=0; i<9; i++)
+  if (f_min>f_max)
+	{
+	 return alpha;
+	}
+
+  for (uint32_t i=0; i<11; i++)
         if (f_min<=f1[i] && f1[i]<=f_max)
                 fo.push_back(f1[i]);
 
-  for (uint32_t i=0; i<9; i++)
+  for (uint32_t i=0; i<11; i++)
         {
          bool aux=0;
-         for (uint32_t j=0; j<9; j++)
+         for (uint32_t j=0; j<11; j++)
                 {
                  if (fo[j]==f2[i])
                         aux=1;
@@ -251,13 +252,13 @@ double overlapFactorToBeDecoded(uint32_t senderChannelWidth, uint32_t receiverCh
         {
           aux1=1000; // just any number not valid as index in this context
           aux2=1000;
-          for (uint32_t j=0; j<9; j++)
+          for (uint32_t j=0; j<11; j++)
                 if (f1[j]==fo[i]) aux1=j;
-          for (uint32_t j=0; j<9; j++)
+          for (uint32_t j=0; j<11; j++)
                 if (f2[j]==fo[i]) aux2=j;
           if (aux1!=1000 && aux2!=1000)
                 {
-                 psdo.push_back(std::min(psd1[aux1], psd2[aux2]));
+                 psdo.push_back(psd1[aux1]*psd2[aux2]);
                  // add additional intersection points
                  if ((psd1[aux1]<psd2[aux2] && psd1[aux1+1]>psd2[aux2+1]) || (psd1[aux1]>psd2[aux2] && psd1[aux1+1]<psd2[aux2+1]))
                         {
@@ -278,45 +279,35 @@ double overlapFactorToBeDecoded(uint32_t senderChannelWidth, uint32_t receiverCh
            else
                 if (aux1!=1000 && aux2==1000)
                         {
-                         for (uint32_t j=0; j<9-1; j++)
+                         for (uint32_t j=0; j<11-1; j++)
                                 {
                                  if ((f2[j]<f1[aux1]) && (f1[aux1]<f2[j+1]))
                                         {
-					if (psd1[aux1]<=psd2[j] && psd1[aux1]<=psd2[j+1])
-                                                psdo.push_back(psd1[aux1]);
-                                        else
-                                                {
-                                                 double ax=f2[j];
-                                                 double bx=f2[j+1];
-                                                 double ay=psd2[j];
-                                                 double by=psd2[j+1];
-                                                 double wx=f1[aux1];
-                                                 double wy=((by-ay)*(wx-ax)/(bx-ax))+ay;
-                                                 psdo.push_back(std::min(wy,psd1[aux1]));              
-                                                }
-					}
+					 double ax=f2[j];
+                                         double bx=f2[j+1];
+                                         double ay=psd2[j];
+                                         double by=psd2[j+1];
+                                         double wx=f1[aux1];
+                                         double wy=((by-ay)*(wx-ax)/(bx-ax))+ay;
+                                         psdo.push_back(wy*psd1[aux1]);              
+                                        }
                                 }
                         }
                 else
                     if (aux1==1000 && aux2!=1000)
                             {
-                             for (uint32_t j=0; j<9-1; j++)
+                             for (uint32_t j=0; j<11-1; j++)
                                 {
                                  if ((f1[j]<f2[aux2]) && (f2[aux2]<f1[j+1]))
                                         {
-					if (psd2[aux2]<=psd1[j] && psd2[aux2]<=psd1[j+1])
-                                                psdo.push_back(psd2[aux2]);
-                                        else
-                                                {
-                                                 double ax=f1[j];
-                                                 double bx=f1[j+1];
-                                                 double ay=psd1[j];
-                                                 double by=psd1[j+1];
-                                                 double wx=f2[aux2];
-                                                 double wy=((by-ay)*(wx-ax)/(bx-ax))+ay;
-                                                 psdo.push_back(std::min(wy,psd2[aux2]));              
-                                                }
-					}
+					 double ax=f1[j];
+                                         double bx=f1[j+1];
+                                         double ay=psd1[j];
+                                         double by=psd1[j+1];
+                                         double wx=f2[aux2];
+                                         double wy=((by-ay)*(wx-ax)/(bx-ax))+ay;
+                                         psdo.push_back(wy*psd2[aux2]);              
+                                        }
                                 }
                         }  
           
@@ -333,7 +324,7 @@ double overlapFactorToBeDecoded(uint32_t senderChannelWidth, uint32_t receiverCh
 		 if (fo_aux[i]>*it && fo_aux[i]<*(it+1))
                         {
 			 fo.insert(it+1,fo_aux[i]);
-         		 psdo.insert(itp,psdo_aux[i]);
+         		 psdo.insert(itp,psdo_aux[i]*psdo_aux[i]);
 			 break; 
                         }
 		}
@@ -353,13 +344,13 @@ double overlapFactorToBeDecoded(uint32_t senderChannelWidth, uint32_t receiverCh
   std::vector<double> psd1_vector;
   std::vector<double> f1_vector;
   
-  for (uint32_t i=0; i<9; i++)
-        {
-        psd1_vector.push_back(psd1[i]);
-        f1_vector.push_back(f1[i]);
-        }
+  for (uint32_t i=0; i<11; i++)
+  	{	
+   	psd1_vector.push_back(psd1[i]);
+   	f1_vector.push_back(f1[i]);
+  	}
 
-  double alpha=0.0;  
+    
   if (fo.size()>1)
   	{
   	 alpha = trapz(fo, psdo) / trapz(f1_vector, psd1_vector);
@@ -415,7 +406,7 @@ YansWifiChannel::Send (Ptr<YansWifiPhy> sender, Ptr<const Packet> packet, double
       //uint32_t receiverChannelNo = (*i)->GetChannelNumber();
       uint32_t receiverChannelWidth = (*i)->GetChannelWidth(); 
       uint32_t receiverCentralFrequency = (*i)->GetFrequency(); 
-      double receiverPower = (*i)->GetTxPowerEnd(); //in dBm
+      //double receiverPower = (*i)->GetTxPowerEnd(); //in dBm
 
 
       bool setModifs = true;
@@ -436,18 +427,8 @@ YansWifiChannel::Send (Ptr<YansWifiPhy> sender, Ptr<const Packet> packet, double
                 }
           else 
                 {
-                 if((senderCentralFrequency-senderChannelWidth/2>=20+receiverCentralFrequency+receiverChannelWidth/2) || (20+senderCentralFrequency+senderChannelWidth/2<=receiverCentralFrequency-receiverChannelWidth/2))
-                        {
-                         // 20 MHz difference between the edges of the two used channels
-                         // no overlapping, no ACI
-                         continue;
-                        }
-                  else
-                        {
-                         // ACI
-                         double alpha = overlapFactorToBeDecoded(senderChannelWidth, receiverChannelWidth, senderCentralFrequency,  receiverCentralFrequency, txPowerDbm, receiverPower);
-                         overlappingFactorDb = 10*log10(alpha);
-                        }
+                 double alpha = overlapFactorToBeDecoded(senderChannelWidth, receiverChannelWidth, senderCentralFrequency,  receiverCentralFrequency);
+                 overlappingFactorDb = 10*log10(alpha);
                  }
 
               Ptr<MobilityModel> receiverMobility = (*i)->GetMobility ()->GetObject<MobilityModel> ();
